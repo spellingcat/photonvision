@@ -44,9 +44,14 @@ const arducamSelectWrapper = computed<number>({
   }
 });
 
-const currentCameraIsArducam = computed<boolean>(
-  () => useCameraSettingsStore().currentCameraSettings.cameraQuirks.quirks.ArduCamCamera
-);
+
+
+// const currentCameraIsArducam = computed<boolean>(
+//   () => useCameraSettingsStore().currentCameraSettings.cameraQuirks.quirks.ArduCamCamera
+// );
+const currentCameraIsArducam = true;
+const showArducamWarning = ref(currentCameraIsArducam && arducamSelectWrapper.value == 0 ? true : false);
+
 
 const settingsHaveChanged = (): boolean => {
   const a = tempSettingsStruct.value;
@@ -104,6 +109,7 @@ const saveCameraSettings = () => {
     });
 };
 
+
 watchEffect(() => {
   // Reset temp settings on remote camera settings change
   resetTempSettingsStruct();
@@ -111,50 +117,71 @@ watchEffect(() => {
 </script>
 
 <template>
-  <v-card class="mb-3 pr-6 pb-3" color="primary" dark>
-    <v-card-title>Camera Settings</v-card-title>
-    <div class="ml-5">
-      <pv-select
-        v-model="useStateStore().currentCameraIndex"
-        label="Camera"
-        :items="useCameraSettingsStore().cameraNames"
-        :select-cols="8"
-      />
-      <pv-number-input
-        v-model="tempSettingsStruct.fov"
-        :tooltip="
-          !useCameraSettingsStore().currentCameraSettings.fov.managedByVendor
-            ? 'Field of view (in degrees) of the camera measured across the diagonal of the frame, in a video mode which covers the whole sensor area.'
-            : 'This setting is managed by a vendor'
-        "
-        label="Maximum Diagonal FOV"
-        :disabled="useCameraSettingsStore().currentCameraSettings.fov.managedByVendor"
-        :label-cols="4"
-      />
-      <pv-select
-        v-show="currentCameraIsArducam"
-        v-model="arducamSelectWrapper"
-        label="Arducam Model"
-        :items="[
-          { name: 'None', value: 0, disabled: true },
-          { name: 'OV9281', value: 1 },
-          { name: 'OV2311', value: 2 },
-          { name: 'OV9782', value: 3 }
-        ]"
-        :select-cols="8"
-      />
-      <br />
-      <v-btn
-        class="mt-2 mb-3"
-        style="width: 100%"
-        small
-        color="secondary"
-        :disabled="!settingsHaveChanged()"
-        @click="saveCameraSettings"
-      >
-        <v-icon left> mdi-content-save </v-icon>
-        Save Changes
-      </v-btn>
-    </div>
-  </v-card>
+  <div>
+    <v-card class="mb-3 pr-6 pb-3" color="primary" dark>
+      <v-card-title>Camera Settings</v-card-title>
+      <div class="ml-5">
+        <pv-select
+          v-model="useStateStore().currentCameraIndex"
+          label="Camera"
+          :items="useCameraSettingsStore().cameraNames"
+          :select-cols="8"
+        />
+        <pv-number-input
+          v-model="tempSettingsStruct.fov"
+          :tooltip="
+            !useCameraSettingsStore().currentCameraSettings.fov.managedByVendor
+              ? 'Field of view (in degrees) of the camera measured across the diagonal of the frame, in a video mode which covers the whole sensor area.'
+              : 'This setting is managed by a vendor'
+          "
+          label="Maximum Diagonal FOV"
+          :disabled="useCameraSettingsStore().currentCameraSettings.fov.managedByVendor"
+          :label-cols="4"
+        />
+        <pv-select
+          v-show="currentCameraIsArducam"
+          v-model="arducamSelectWrapper"
+          label="Arducam Model"
+          :items="[
+            { name: 'None', value: 0, disabled: true },
+            { name: 'OV9281', value: 1 },
+            { name: 'OV2311', value: 2 },
+            { name: 'OV9782', value: 3 }
+          ]"
+          :select-cols="8"
+        />
+        <br />
+        <v-btn
+          class="mt-2 mb-3"
+          style="width: 100%"
+          small
+          color="secondary"
+          :disabled="!settingsHaveChanged()"
+          @click="saveCameraSettings"
+        >
+          <v-icon left> mdi-content-save </v-icon>
+          Save Changes
+        </v-btn>
+      </div>
+    </v-card>
+    <v-dialog v-model="showArducamWarning" width="500px" :persistent="true">
+      <v-card color="primary" dark>
+        <v-card-title class="pb-8"> Select Arducam Model </v-card-title>
+        <div class="ml-3">
+          <v-col style="text-align: center">
+            <template v-if="showArducamWarning">
+                <v-icon color="blue" size="70"> mdi-cancel </v-icon>
+                <v-card-text
+                  >You currently do not have a model selected for your Arducam. You can select this in Cameras -> Camera Settings.</v-card-text>
+              </template>
+              <template v-else></template>
+          </v-col>
+        </div>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="white" text @click="showArducamWarning = false"> OK </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
